@@ -1,0 +1,2 @@
+class DependencyNotFoundError(Exception):
+    pass

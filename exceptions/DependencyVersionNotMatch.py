@@ -1,0 +1,2 @@
+class DependencyVersionNotMatchError(Exception):
+    pass

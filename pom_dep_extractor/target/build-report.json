@@ -1,0 +1,10 @@
+{
+  "projectReports" : [ {
+    "name" : "Quarkus - Liquibase MongoDB - Runtime",
+    "status" : "SUCCESS",
+    "basedir" : "",
+    "error" : null,
+    "groupId" : "io.quarkus",
+    "artifactId" : "quarkus-liquibase-mongodb"
+  } ]
+}

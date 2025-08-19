@@ -1,0 +1,16 @@
+20:30:48.960 [main] INFO  org.revapi.standalone.Main - Downloading checked archives
+20:30:48.985 [main] INFO  org.revapi.standalone.Main - Downloading extensions
+20:33:56.731 [main] INFO  org.revapi.standalone.Main - Starting analysis
+20:33:56.879 [main] WARN  o.r.r.file.AbstractFileReporter - At least one of `minSeverity` and `minCriticality` should to be defined. Defaulting to the obsolete behavior of reporting all potentially breaking elements.
+20:34:33.342 [main] INFO  org.revapi.standalone.Main - Analysis took 36609ms.
+20:54:56.982 [main] INFO  org.revapi.standalone.Main - Downloading checked archives
+20:54:57.005 [main] INFO  org.revapi.standalone.Main - Downloading extensions
+20:54:58.776 [main] INFO  org.revapi.standalone.Main - Starting analysis
+20:55:22.265 [main] INFO  org.revapi.standalone.Main - Analysis took 23489ms.
+20:57:01.260 [main] INFO  org.revapi.standalone.Main - Downloading checked archives
+20:57:01.280 [main] INFO  org.revapi.standalone.Main - Downloading extensions
+20:57:02.830 [main] INFO  org.revapi.standalone.Main - Starting analysis
+20:57:20.195 [main] INFO  org.revapi.standalone.Main - Analysis took 17364ms.
+21:25:23.749 [main] INFO  org.revapi.standalone.Main - Downloading checked archives
+21:25:23.767 [main] INFO  org.revapi.standalone.Main - Downloading extensions
+21:25:25.215 [main] INFO  org.revapi.standalone.Main - Starting analysis
