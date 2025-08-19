@@ -1,4 +1,4 @@
-# coral
+# Coral
 This is the source code for the reproduction of Coral published at ICSE23
 
 Because the project was initially developed based on an external database, MongoDB. Given its large volume and commercial confidentiality, I am not releasing it in this repo. You are most welcome to contact me for the up-to-date databases at `lyuyezhang@gmail.com`.
