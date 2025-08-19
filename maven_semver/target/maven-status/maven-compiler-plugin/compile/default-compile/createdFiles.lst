@@ -1,0 +1,6 @@
+VersionTools/GraphAPI.class
+VersionTools/CheckRange.class
+VersionTools/Identify.class
+VersionTools/Application.class
+VersionTools/CliAPI.class
+VersionTools/SortVersions.class
