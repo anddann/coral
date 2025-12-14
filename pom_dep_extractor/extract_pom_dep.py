@@ -5,6 +5,7 @@ import os
 
 import pymongo
 
+import config
 from config import MONGO_HOST, MONGO_PORT, pom_path
 from download_pom import download_pom_one
 
@@ -28,7 +29,7 @@ def populate_dep(gav, c=None):
         output = subprocess.check_output('mvn help:effective-pom -Doutput=tmp_pom.xml',stderr=subprocess.STDOUT, shell=True)
         # print(output)
     except:
-        with open('/Users/lyuye/workspace/collegues/yiran/errored.csv', 'a') as fc:
+        with open(config.workspace+'/collegues/yiran/errored.csv', 'a') as fc:
             csv.writer(fc).writerow([gav.replace('|', ':')])
     os.chdir(cwd)
     try:

@@ -2,6 +2,8 @@ import json
 import subprocess,re
 import csv, sys
 from collections import defaultdict
+
+import config
 from jar_config import revapi
 
 
@@ -37,8 +39,8 @@ def get_incompatible_apis(jar1, jar2):
     return incomp_apis
 
 if __name__=='__main__':
-    jar1 = '/Users/lyuye/workspace/java-compatibility/jars/httpcore-4.1.jar'
-    jar2 = '/Users/lyuye/workspace/java-compatibility/jars/httpcore-4.2.jar'
+    jar1 = config.workspace+'/java-compatibility/jars/httpcore-4.1.jar'
+    jar2 = config.workspace+'/java-compatibility/jars/httpcore-4.2.jar'
     get_incompatible_apis(jar1, jar2)
 
 

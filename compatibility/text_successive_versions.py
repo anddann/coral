@@ -6,6 +6,7 @@ import json
 
 import requests
 
+import config
 from compatibility.get_break import compatibility_check
 from utils.version_utils import _sort
 
@@ -38,7 +39,7 @@ def test_successsive():
 
 def remove_non_existent_APIs():
     names = []
-    for line in csv.reader(open('/Users/lyuye/workspace/java-compatibility/sootCallGraph/graph/guava-r03_NameList.csv')):
+    for line in csv.reader(open(config.workspace+'/java-compatibility/sootCallGraph/graph/guava-r03_NameList.csv')):
         names.append(re.sub('\(.*$', '', line[0]))
     ret = []
     dir = json.load(open(f'compatibility/results/{a}_direct.json'))

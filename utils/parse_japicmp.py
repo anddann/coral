@@ -95,7 +95,7 @@ def parse_output(out):
 
 
 def semb_study():
-    with open('/Users/lyuye/workspace/java-compatibility/scripts_py/RQ4 new large scale - ma.csv') as f, open('/Users/lyuye/workspace/java-compatibility/scripts_py/minor_japicmp.csv', 'w') as fw:
+    with open(config.workspace+'/java-compatibility/scripts_py/RQ4 new large scale - ma.csv') as f, open(config.workspace+'/java-compatibility/scripts_py/minor_japicmp.csv', 'w') as fw:
         names = []
         for l in csv.reader((f)):
             if l[0]=='name':

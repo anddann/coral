@@ -55,7 +55,7 @@ def apply():
                         project_versions[new] = project_path[f.replace('_steady.json', '')]['snyk'].replace('PLACEHOLDER', submodule).replace('snyk', 'steady')
                         res[g+'|'+a].add(v)
 
-    os.chdir('/Users/lyuye/workspace/remediation/'+project_address+'_steady/')
+    os.chdir(config.workspace+'/remediation/'+project_address+'_steady/')
     deps = list()
     manual = []
 
@@ -77,7 +77,7 @@ def apply():
                 except:
                     pass
                 update_pom(project_versions[k+'|'+ver]+'pom.xml', [k+'|'+ver], {k: ver})
-                os.chdir('/Users/lyuye/workspace/remediation/' + project_address + '_steady/')
+                os.chdir(config.workspace+'/remediation/' + project_address + '_steady/')
         g, a = k.split('|')
         deps.append(k+'|'+list(v)[0])
         ga = k.replace('|', ':')
@@ -87,7 +87,7 @@ def apply():
         except Exception as e:
             print(e)
 
-    update_pom('/Users/lyuye/workspace/remediation/' + project_address + '_steady/pom.xml', deps, res)
+    update_pom(config.workspace+'/remediation/' + project_address + '_steady/pom.xml', deps, res)
     for m in manual:
         print(m)
 # apply()

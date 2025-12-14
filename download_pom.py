@@ -14,6 +14,7 @@ import time
 from timeloop import Timeloop
 from datetime import timedelta
 
+import config
 from config import m2_path, pom_path
 
 PROXIES = []
@@ -220,7 +221,7 @@ def download_pom(m2_repo, gavs=None, get_url_fn=None, download_fn=None, curl_fla
 
 def download_all_poms(gav):
     gavs = [gav]
-    download_pom(m2_repo='/Users/lyuye/.m2/repository', gavs=gavs)
+    download_pom(m2_repo=config.m2_path, gavs=gavs)
     print("downloaded finised, new downloaded: ", new_counter)
 
 def download_pom_one(jar_info):

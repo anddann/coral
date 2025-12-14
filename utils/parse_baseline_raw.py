@@ -57,5 +57,5 @@ def apply():
             # os.system('mvn versions:update-property -DnewVersion=' + list(v)[
             #     0] + ' -Dproperty=' + a + '.version  -DallowDowngrade=true')
             update_pom(os.path.join(test_path, 'pom.xml'), [k + '|' + ver], {k: ver})
-            # os.chdir('/Users/lyuye/workspace/remediation/' + project_address[i] + '_snyk/')
+            # os.chdir(config.workspace+'/remediation/' + project_address[i] + '_snyk/')
 # parse()

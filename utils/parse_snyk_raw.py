@@ -2,6 +2,7 @@ import json
 import os
 from collections import defaultdict
 
+import config
 from utils.pom_modifier import update_pom
 from config import project_path
 
@@ -45,7 +46,7 @@ def apply():
                             res[g+'|'+a].add(v)
         manual = []
         deps = list()
-        os.chdir('/Users/lyuye/workspace/remediation/'+project_address[i]+'_snyk/')
+        os.chdir(config.workspace+'/remediation/'+project_address[i]+'_snyk/')
         for k, v in res.items():
             print(len(v), k)
             if len(v) >1:
@@ -61,13 +62,13 @@ def apply():
                     os.system('mvn versions:update-property -DnewVersion=' + list(v)[
                         0] + ' -Dproperty=' + a + '.version  -DallowDowngrade=true')
                     update_pom(project_versions[k+'|'+ver]+'pom.xml', [k+'|'+ver], {k: ver})
-                    os.chdir('/Users/lyuye/workspace/remediation/' + project_address[i] + '_snyk/')
+                    os.chdir(config.workspace+'/remediation/' + project_address[i] + '_snyk/')
             g, a = k.split('|')
             ga = k.replace('|', ':')
             deps.append(k+'|'+list(v)[0])
             os.system('mvn versions:use-dep-version -Dincludes='+ga+' -DdepVersion='+list(v)[0] +' -DforceVersion=true')
             os.system('mvn versions:update-property -DnewVersion='+list(v)[0]+' -Dproperty='+a+'.version  -DallowDowngrade=true')
-        update_pom('/Users/lyuye/workspace/remediation/' + project_address[i] + '_snyk/pom.xml', deps, res)
+        update_pom(config.workspace+'/remediation/' + project_address[i] + '_snyk/pom.xml', deps, res)
         for m in manual:
             print(m)
 # apply()

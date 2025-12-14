@@ -1,6 +1,8 @@
 import os
 import pymongo
 import pickle
+
+import config
 from config import working_dir, project_path as paths, mongodb_host, mongodb_port
 from bom_evaluation import evaluate_other_tools, evaluate_original_for_benchmark, evaluate_algo, evaluate_baseline, \
     eval_scantist, testing_compilation_n_unit_tests_for_one, evaluate_all_smt, evaluate_large_scale
@@ -118,7 +120,7 @@ def clear_placeHolder(project_path, project, real_pr_flag =False):
 def switch_to_new_mac_path(project_path, project):
     sub_project = project.split('_')[-1]
     for key in project_path[project]:
-        project_path[project][key] = project_path[project][key].replace('/Users/lyuye/workspace/remediation/', '/Users/lyuye/workspace/java-remediation/remediation/')
+        project_path[project][key] = project_path[project][key].replace(config.workspace+'/remediation/', config.workspace+'/java-remediation/remediation/')
     return project_path
 
 def testing_compilation_test(project):
