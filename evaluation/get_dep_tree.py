@@ -18,19 +18,19 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 # inspect_paths = [
-#     '/Users/lyuye/workspace/remediation/sortpom',
-#     '/Users/lyuye/workspace/remediation/mall',
-#     '/Users/lyuye/workspace/remediation/javaee-essentials-pom',
-#     '/Users/lyuye/workspace/remediation/metasfresh-parent-legacy',
-#     '/Users/lyuye/workspace/remediation/pom-manipulation-ext',
-#     '/Users/lyuye/workspace/remediation/netty-example',
-#     '/Users/lyuye/workspace/remediation/snyk-maven-plugin',
-#     '/Users/lyuye/workspace/remediation/eclipse-external-annotations-m2e-plugin',
-#     '/Users/lyuye/workspace/remediation/write-text-files-maven-plugin',
-#     '/Users/lyuye/workspace/remediation/htmlcompressor-maven-plugin',
-#     '/Users/lyuye/workspace/remediation/flexmojos-m2e-connector',
-#     '/Users/lyuye/workspace/remediation/javaee-essentials-pom',
-#     '/Users/lyuye/workspace/remediation/ironjacamar'
+#     config.workspace+'/remediation/sortpom',
+#     config.workspace+'/remediation/mall',
+#     config.workspace+'/remediation/javaee-essentials-pom',
+#     config.workspace+'/remediation/metasfresh-parent-legacy',
+#     config.workspace+'/remediation/pom-manipulation-ext',
+#     config.workspace+'/remediation/netty-example',
+#     config.workspace+'/remediation/snyk-maven-plugin',
+#     config.workspace+'/remediation/eclipse-external-annotations-m2e-plugin',
+#     config.workspace+'/remediation/write-text-files-maven-plugin',
+#     config.workspace+'/remediation/htmlcompressor-maven-plugin',
+#     config.workspace+'/remediation/flexmojos-m2e-connector',
+#     config.workspace+'/remediation/javaee-essentials-pom',
+#     config.workspace+'/remediation/ironjacamar'
 #
 # ]
 # inspect_paths = []
@@ -156,8 +156,8 @@ def get_cve_from_file(gav):
             mapping = defaultdict(list)
             for l in csv.reader(f):
                 mapping[l[1]].append(l[0])
-
-        json.dump(mapping, open(working_dir+'vulnerabilities/vul_mapping.json', 'w'))
+        with open(working_dir+'vulnerabilities/vul_mapping.json', 'w') as f:
+            json.dump(mapping, f)
     else:
         mapping = json.load(open(working_dir+'vulnerabilities/vul_mapping.json'))
     g, a, v = gav.split('|')
