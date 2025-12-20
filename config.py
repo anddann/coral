@@ -4,7 +4,7 @@ logging.getLogger("root").setLevel(logging.WARNING)
 logging.basicConfig(level=logging.ERROR)
 total_jobs = 80
 
-MONGO_HOST = os.environ['MONGO_HOST']
+MONGO_HOST = os.getenv('MONGO_HOST',"localhost")
 MONGO_PORT = 27017
 
 mongodb_host = MONGO_HOST
@@ -29,11 +29,11 @@ testcases_dir = './'
 refactoringMiner_path = './libs/RefactoringMiner/build/distributions/RefactoringMiner-3.0.9/bin/RefactoringMiner'
 
 # semantic version
-semver_host = os.environ['SEMSERVER_HOST']#'155.69.151.221'
+semver_host = os.getenv('SEMSERVER_HOST',"localhost")#'155.69.151.221'
 semver_port = 8080
 
 # Graph API
-graph_api_host = os.environ['GRAPH_API_HOST']#'155.69.145.245'#'155.69.151.221'##'ec2-13-250-81-217.ap-southeast-1.compute.amazonaws.com'
+graph_api_host = os.getenv('GRAPH_API_HOST',"localhost")#'155.69.145.245'#'155.69.151.221'##'ec2-13-250-81-217.ap-southeast-1.compute.amazonaws.com'
 graph_api_port = '8090'#'8085'
 
 jar_timeout_default = 600
