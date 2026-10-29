@@ -167,6 +167,15 @@ def get_cve_from_file(gav):
 def get_cve(gav):
     g, a, v = str(gav).split('|')
     clean_v = v.replace('-SNAPSHOT', '')
+    try:
+        from utils.vuln_config import is_fixed_vuln_enabled, get_fixed_cves
+        if is_fixed_vuln_enabled():
+            fixed_cves = get_fixed_cves(g, a, clean_v)
+            if fixed_cves is not None:
+                return set(each for each in fixed_cves if 'SEC' not in each)
+    except Exception:
+        pass
+
     from config import USE_DEPS_DEV
     if USE_DEPS_DEV:
         try:

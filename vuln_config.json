@@ -1,0 +1,21 @@
+{
+  "_comment": "Configuration for fixed/defined set of vulnerabilities and clean versions.",
+  "mode": "fixed_only",
+  "dependencies": {
+    "io.netty:netty-codec": {
+      "vulnerable_versions": [
+        "4.1.67.Final"
+      ],
+      "clean_versions": [
+        "4.1.68.Final",
+        "4.1.69.Final",
+        "4.1.70.Final"
+      ],
+      "cves": {
+        "4.1.67.Final": [
+          "CVE-2021-37136"
+        ]
+      }
+    }
+  }
+}

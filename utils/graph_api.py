@@ -33,6 +33,15 @@ def get_unreachable_fewest_vul_vers(gav, c, vul_versions):
 
 def get_vul_versions(gav, c, clean_versions):
     g, a, v = gav.split('|')
+    try:
+        from utils.vuln_config import is_fixed_vuln_enabled, get_fixed_vuln_versions
+        if is_fixed_vuln_enabled():
+            fixed_vuln = get_fixed_vuln_versions(g, a)
+            if fixed_vuln is not None:
+                return fixed_vuln
+    except Exception:
+        pass
+
     maven = None
     if c is not None:
         try:
@@ -90,6 +99,15 @@ def get_dependency_tree(directs, c=None):
 
 def get_clean_versions(gav, c=None):
     g, a, v = gav.split('|')
+    try:
+        from utils.vuln_config import is_fixed_vuln_enabled, get_fixed_clean_versions
+        if is_fixed_vuln_enabled():
+            fixed_clean = get_fixed_clean_versions(g, a)
+            if fixed_clean is not None:
+                return fixed_clean
+    except Exception:
+        pass
+
     if USE_DEPS_DEV:
         return get_clean_versions_deps_dev(g, a)
 

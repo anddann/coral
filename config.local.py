@@ -39,6 +39,10 @@ graph_api_port = '8090'#'8085'
 # deps.dev & OSV integration toggle (replaces proprietary Scantist Graph API)
 USE_DEPS_DEV = os.getenv('USE_DEPS_DEV', 'True').lower() in ('true', '1')
 
+# Fixed/custom vulnerability definitions configuration
+USE_FIXED_VULN = os.getenv('USE_FIXED_VULN', 'True').lower() in ('true', '1')
+VULN_CONFIG_PATH = os.getenv('VULN_CONFIG_PATH', 'vuln_config.json')
+
 jar_timeout_default = 600
 jar_timeout_short = 120
 timeout_flag = "subprocess.TimeoutExpired"
