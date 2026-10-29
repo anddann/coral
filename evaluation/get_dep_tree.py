@@ -166,31 +166,50 @@ def get_cve_from_file(gav):
 
 def get_cve(gav):
     g, a, v = str(gav).split('|')
+    clean_v = v.replace('-SNAPSHOT', '')
+    from config import USE_DEPS_DEV
+    if USE_DEPS_DEV:
+        try:
+            from utils.deps_dev_api import get_cves_osv
+            cves = get_cves_osv(g, a, clean_v)
+            if cves:
+                return set(each for each in cves if 'SEC' not in each)
+        except Exception:
+            pass
+        return get_cve_from_file(gav)
+
     body = {
         "name": a,
         "vendor": g,
-        "version": v.replace('-SNAPSHOT', ''),
+        "version": clean_v,
         "platform": "maven"
     }
-    response = requests.post(f'http://{graph_api_host}:{graph_api_port}/issue4one', json=body)
-    if response.status_code == 200:
-        return set(each for each in response.json() if 'SEC' not in each)
-    else:
-        print('[WARNING] Get issue exception', g, a, v)
-        return set()
+    try:
+        response = requests.post(f'http://{graph_api_host}:{graph_api_port}/issue4one', json=body, timeout=5)
+        if response.status_code == 200:
+            return set(each for each in response.json() if 'SEC' not in each)
+    except Exception:
+        pass
+
+    try:
+        from utils.deps_dev_api import get_cves_osv
+        cves = get_cves_osv(g, a, clean_v)
+        if cves:
+            return set(each for each in cves if 'SEC' not in each)
+    except Exception:
+        pass
+    return get_cve_from_file(gav)
 
 def get_cves(deps):
     ret = set()
     for gav in deps:
-        # ret = ret.union(get_cve(gav))
-        ret = ret.union(get_cve_from_file(gav))
+        ret = ret.union(get_cve(gav))
     return ret
 
 def get_cves_dict(deps):
     ret = {}
     for gav in deps:
-        # cves = get_cve(gav)
-        cves = get_cve_from_file(gav)
+        cves = get_cve(gav)
         if len(cves)!=0:
             ret[gav] = cves
     return ret
@@ -278,24 +297,29 @@ def walk_subgraph(edges_, root):
     return ret
 
 def supplement_edges(c, deps, edges):
-    maven_deps = c['library-crawler']['maven_deps']
-    edge_dict = defaultdict(set)
-    for edge in edges:
-        dg, da, dv = edge[1].split('|')
-        edge_dict[edge[0]].add(dg+'|'+da)
-    dep_libs = {}
-    for dep in deps:
-        g, a, v = dep.split('|')
-        dep_libs[g+'|'+a] = v
-    for dep in deps:
-        g,a,v = dep.split('|')
-        doc = maven_deps.find_one({'parent': g+':'+a+':'+v})
-        if doc:
-            for dep_dep in doc['dependencies']:
-                dg, da, dv = dep_dep['dep'].split(':')
-                if dg+'|'+da not in edge_dict[dep] and dep_dep['dScope'] in {'compile', 'runtime'} \
-                        and dep_dep['isoptional']=='false' and dg+'|'+da in dep_libs:
-                    edges.append([dep, dg+'|'+da+'|'+dep_libs[dg+'|'+da]])
+    if c is None:
+        return edges
+    try:
+        maven_deps = c['library-crawler']['maven_deps']
+        edge_dict = defaultdict(set)
+        for edge in edges:
+            dg, da, dv = edge[1].split('|')
+            edge_dict[edge[0]].add(dg+'|'+da)
+        dep_libs = {}
+        for dep in deps:
+            g, a, v = dep.split('|')
+            dep_libs[g+'|'+a] = v
+        for dep in deps:
+            g,a,v = dep.split('|')
+            doc = maven_deps.find_one({'parent': g+':'+a+':'+v})
+            if doc:
+                for dep_dep in doc['dependencies']:
+                    dg, da, dv = dep_dep['dep'].split(':')
+                    if dg+'|'+da not in edge_dict[dep] and dep_dep['dScope'] in {'compile', 'runtime'} \
+                            and dep_dep['isoptional']=='false' and dg+'|'+da in dep_libs:
+                        edges.append([dep, dg+'|'+da+'|'+dep_libs[dg+'|'+da]])
+    except Exception as e:
+        logging.debug(f'supplement_edges skipped: {e}')
     return edges
 
 def get_subgraphs_from_deptree(c, dep_tree):

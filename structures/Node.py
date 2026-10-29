@@ -148,7 +148,12 @@ class Node:
     def calculate_candidates_safer(self, c, depGraph):
         # return backtrack
         # default return is false
-        maven = c['library-crawler']['maven']
+        maven = None
+        if c is not None:
+            try:
+                maven = c['library-crawler']['maven']
+            except Exception:
+                maven = None
         ## debug
         # if self.ga=='com.oracle|ojdbc6':
         #     ccc = 1
@@ -430,12 +435,19 @@ class Node:
 
     def check_central(self, c):
         g, a, v = self.gav.split('|')
-        maven = c['library-crawler']['maven']
-        docs = maven.find_one({'group': g, 'artifact': a})
-        if docs:
+        if c is not None:
+            try:
+                maven = c['library-crawler']['maven']
+                docs = maven.find_one({'group': g, 'artifact': a})
+                if docs:
+                    return True
+            except Exception:
+                pass
+        try:
+            from utils.deps_dev_api import is_in_central_deps_dev
+            return is_in_central_deps_dev(g, a)
+        except Exception:
             return True
-        else:
-            return False
 
     def check_parents_lvls(self, visited):
         # if backtrack, then normal

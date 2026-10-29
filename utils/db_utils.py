@@ -17,10 +17,16 @@ DB = 'cvetriage'
 User = 'cvetriage'
 Password = ';Vj93rquRi8aTB'
 
-c = pymongo.MongoClient(mongodb_host,
-                        port=mongodb_port)
-maven_deps = c['library-crawler']['maven_deps']
-maven = c['library-crawler']['maven']
+try:
+    c = pymongo.MongoClient(mongodb_host,
+                            port=mongodb_port,
+                            serverSelectionTimeoutMS=1000)
+    maven_deps = c['library-crawler']['maven_deps']
+    maven = c['library-crawler']['maven']
+except Exception:
+    c = None
+    maven_deps = None
+    maven = None
 def update_cvss(collection, cvss_col):
     timestamp = collection.find_one({'key': 'timestamp'})['timestamp']
     cvss_col.create_index('cve')
@@ -65,23 +71,28 @@ def generate_dep_now(gav):
 
 
 def get_default_version(parent_gav, dep_ga, c):
-    maven_deps = c['library-crawler']['maven_deps']
-    populate_dep(parent_gav, c)
-    doc = maven_deps.find_one(
-        {'parent': parent_gav.replace('|', ':')})
     default_version = ''
-    if doc:
-        for dep in doc['dependencies']:
-            dep_ga_in_doc = dep['dep'].replace(':' + dep['dep'].split(':')[-1], '')
-            if dep_ga_in_doc == dep_ga.replace('|', ':'):
-                default_version = dep['dep'].split(':')[-1]
-    # else:
-        # raise DependencyNotFoundError("Cannot find deps for: " + parent_gav.replace('|', ':'))
-        # print("Cannot find deps for: " + parent_gav.replace('|', ':'))
+    if c is not None:
+        try:
+            maven_deps = c['library-crawler']['maven_deps']
+            populate_dep(parent_gav, c)
+            doc = maven_deps.find_one(
+                {'parent': parent_gav.replace('|', ':')})
+            if doc:
+                for dep in doc['dependencies']:
+                    dep_ga_in_doc = dep['dep'].replace(':' + dep['dep'].split(':')[-1], '')
+                    if dep_ga_in_doc == dep_ga.replace('|', ':'):
+                        default_version = dep['dep'].split(':')[-1]
+        except Exception:
+            pass
+
     if default_version == '':
-        # raise DependencyNotFoundError("Cannot find deps for: " + parent_gav.replace('|', ':')+'-->'+dep_ga.replace('|', ':'))
-        # print("Cannot find deps for: " + parent_gav.replace('|', ':')+'-->'+dep_ga.replace('|', ':'))
-        return ""
+        try:
+            from utils.deps_dev_api import get_default_version_deps_dev
+            default_version = get_default_version_deps_dev(parent_gav, dep_ga)
+        except Exception:
+            pass
+
     return default_version
 
 def dictize_deps(doc):
@@ -99,8 +110,20 @@ def dictize_deps(doc):
 def get_all_versions(ga, maven):
     g, a = ga.split('|')
     ret = []
-    for doc in maven.find({'group': g, 'artifact': a}):
-        ret.append(doc['version'])
+    if maven is not None:
+        try:
+            for doc in maven.find({'group': g, 'artifact': a}):
+                ret.append(doc['version'])
+        except Exception:
+            pass
+
+    if not ret:
+        try:
+            from utils.deps_dev_api import get_all_versions_deps_dev
+            ret = get_all_versions_deps_dev(g, a)
+        except Exception:
+            pass
+
     if '' in ret:
         ret.remove('')
     return ret
