@@ -17,8 +17,12 @@ from utils.version_utils import get_latest_version
 
 
 def all_solver(project_name, original_path):
-    c = pymongo.MongoClient(MONGO_HOST,
-                            port=MONGO_PORT)
+    try:
+        c = pymongo.MongoClient(MONGO_HOST,
+                                port=MONGO_PORT,
+                                serverSelectionTimeoutMS=1000)
+    except Exception:
+        c = None
 
     subgraphs = get_original_dep_tree(c, original_path)
     edges = subgraphs['edges']
@@ -56,8 +60,12 @@ def all_solver(project_name, original_path):
     print('[INFO] allSovler Completed!')
 
 def baseline(project_name, original_path):
-    c = pymongo.MongoClient(MONGO_HOST,
-                            port=MONGO_PORT)
+    try:
+        c = pymongo.MongoClient(MONGO_HOST,
+                                port=MONGO_PORT,
+                                serverSelectionTimeoutMS=1000)
+    except Exception:
+        c = None
 
     subgraphs = get_original_dep_tree(c, original_path)
     edges = subgraphs['edges']
@@ -97,8 +105,12 @@ def baseline(project_name, original_path):
 
 def product_remediation(graph_api_std_deptree, user_clss_file_path, project_name='dummy'):
     # name = jar.split("/")[-1].replace('-jar-with-dependencies.jar', '')
-    c = pymongo.MongoClient(MONGO_HOST,
-           port=MONGO_PORT)
+    try:
+        c = pymongo.MongoClient(MONGO_HOST,
+                                port=MONGO_PORT,
+                                serverSelectionTimeoutMS=1000)
+    except Exception:
+        c = None
     subgraphs = get_subgraphs_from_deptree(c, graph_api_std_deptree)
     initial_deps_ga = {gav.replace('|'+gav.split('|')[-1], '') for gav in subgraphs['deps']}
     depGraph = DependencyGraph(subgraphs, project_name)

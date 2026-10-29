@@ -9,9 +9,9 @@ from utils.miscellaneous import timer, get_jar_path
 def revapi_jar(jar1, jar2):
     ret = []
     # try:
-    # print('/Users/lyuye/workspace/java-compatibility/otherTools/revapi-0.11.2/revapi.sh', '-n', jar2, '-o', jar1,
+    # print(config.workspace+'/java-compatibility/otherTools/revapi-0.11.2/revapi.sh', '-n', jar2, '-o', jar1,
     #      '--extensions=org.revapi:revapi-java:0.24.4,org.revapi:revapi-reporter-text:0.14.2 -D revapi.reporter.text.minSeverity=BREAKING')
-    # out = subprocess.run(f'/Users/lyuye/workspace/java-compatibility/otherTools/revapi-0.11.2/revapi.sh -n {jar2} -o {jar1} --extensions=org.revapi:revapi-java:0.24.4,org.revapi:revapi-reporter-text:0.14.2 -D revapi.reporter.text.minSeverity=BREAKING |grep -v "old: <none>"',capture_output=True)
+    # out = subprocess.run(fconfig.workspace+'/java-compatibility/otherTools/revapi-0.11.2/revapi.sh -n {jar2} -o {jar1} --extensions=org.revapi:revapi-java:0.24.4,org.revapi:revapi-reporter-text:0.14.2 -D revapi.reporter.text.minSeverity=BREAKING |grep -v "old: <none>"',capture_output=True)
     process = subprocess.Popen(
         [working_dir+'revapi-0.11.2/revapi.sh', '-n', jar2, '-o', jar1,
          '--extensions=org.revapi:revapi-java:0.24.4,org.revapi:revapi-reporter-text:0.14.2 -D revapi.reporter.text.minSeverity=BREAKING'],
@@ -50,13 +50,13 @@ def revapi(g, a, v1, v2):
     ver1 = v1
     ver2 = v2
 
-    jar1 ='/Users/lyuye/workspace/java-compatibility/jars/' + lib + '-' + ver1 + '.jar'
-    jar2 = '/Users/lyuye/workspace/java-compatibility/jars/' + lib + '-' + ver2 + '.jar'
+    jar1 =config.workspace+'/java-compatibility/jars/' + lib + '-' + ver1 + '.jar'
+    jar2 = config.workspace+'/java-compatibility/jars/' + lib + '-' + ver2 + '.jar'
     # print(jar1)
     # print(jar2)
-    # out = subprocess.run(f'/Users/lyuye/workspace/java-compatibility/otherTools/revapi-0.11.2/revapi.sh -n {jar2} -o {jar1} --extensions=org.revapi:revapi-java:0.24.4,org.revapi:revapi-reporter-text:0.14.2 -D revapi.reporter.text.minSeverity=BREAKING |grep -v "old: <none>"',capture_output=True)
+    # out = subprocess.run(fconfig.workspace+'/java-compatibility/otherTools/revapi-0.11.2/revapi.sh -n {jar2} -o {jar1} --extensions=org.revapi:revapi-java:0.24.4,org.revapi:revapi-reporter-text:0.14.2 -D revapi.reporter.text.minSeverity=BREAKING |grep -v "old: <none>"',capture_output=True)
     process = subprocess.Popen(
-        ['/Users/lyuye/workspace/java-compatibility/otherTools/revapi-0.11.2/revapi.sh', '-n', jar2, '-o', jar1,
+        [config.workspace+'/java-compatibility/otherTools/revapi-0.11.2/revapi.sh', '-n', jar2, '-o', jar1,
          '--extensions=org.revapi:revapi-java:0.24.4,org.revapi:revapi-reporter-text:0.14.2 -D revapi.reporter.text.minSeverity=BREAKING'],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = process.communicate()

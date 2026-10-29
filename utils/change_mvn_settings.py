@@ -41,7 +41,7 @@ def attempt_all_versions(pom_path, old_version, group, artifact):
 
     print(res)
 if __name__ == '__main__':
-    pom_path = '/Users/lyuye/workspace/remediation/ironjacamar2/web/pom.xml'
+    pom_path = config.workspace+'/remediation/ironjacamar2/web/pom.xml'
     old_version = '9.4.41.v20210516'
     group = 'org.eclipse.jetty'
     artifact = 'jetty-webapp'

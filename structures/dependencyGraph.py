@@ -154,7 +154,12 @@ class DependencyGraph:
 
     def  exclude_reachable_vulnerable_versions(self, node_ga, cves_dict, c):
         graph, classes = prune_graph(self.callgraph)
-        cve_funcs = c['remediation']['cve_funcs']
+        cve_funcs = None
+        if c is not None:
+            try:
+                cve_funcs = c['remediation']['cve_funcs']
+            except Exception:
+                cve_funcs = None
         unreachable_versions = set()
         cve_visited = set()
 
@@ -169,7 +174,12 @@ class DependencyGraph:
                 if cve in cve_visited:
                     continue
                 cve_visited.add(cve)
-                doc = cve_funcs.find_one({'cve': cve})
+                doc = None
+                if cve_funcs is not None:
+                    try:
+                        doc = cve_funcs.find_one({'cve': cve})
+                    except Exception:
+                        doc = None
                 if doc:
                     # Tried to find funcs but failed
                     if 'notFound' in doc:
@@ -276,17 +286,37 @@ class DependencyGraph:
         new_version = node.get_preferred()
         if new_version==None:
             a =1
-        maven_deps = c['library-crawler']['maven_deps']
-        callgraph_db_direct = c['call_graphs_direct']
-        callgraph_db_all = c['call_graphs_all']
-        populate_dep(node.get_ga()+'|'+new_version, c)
-        doc = maven_deps.find_one({'parent': (node.get_ga()+'|'+new_version).replace('|', ':')})
+        maven_deps = None
+        callgraph_db_direct = None
+        callgraph_db_all = None
+        if c is not None:
+            try:
+                maven_deps = c['library-crawler']['maven_deps']
+                callgraph_db_direct = c['call_graphs_direct']
+                callgraph_db_all = c['call_graphs_all']
+                populate_dep(node.get_ga()+'|'+new_version, c)
+            except Exception:
+                pass
+
+        doc = None
+        if maven_deps is not None:
+            try:
+                doc = maven_deps.find_one({'parent': (node.get_ga()+'|'+new_version).replace('|', ':')})
+            except Exception:
+                doc = None
+
         if not doc:
-            node.sons = {}
-            print("[ERROR] Cannot find deps for: " + (node.get_ga()+'|'+new_version).replace('|', ':'))
-            return []
-            # raise DependencyNotFoundError("Cannot find deps for: " + (node.get_ga()+'|'+new_version).replace('|', ':'))
-        deps = dictize_deps(doc)
+            from utils.deps_dev_api import get_direct_deps_deps_dev
+            ng, na = node.get_ga().split('|')
+            directs = get_direct_deps_deps_dev(ng, na, new_version)
+            if directs:
+                deps = directs
+            else:
+                node.sons = {}
+                print("[ERROR] Cannot find deps for: " + (node.get_ga()+'|'+new_version).replace('|', ':'))
+                return []
+        else:
+            deps = dictize_deps(doc)
         # For fewer deps:
         for son in node.get_sons():
             if not son.get_ga() in deps:

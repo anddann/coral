@@ -1,23 +1,23 @@
 import copy
 import json
+import logging
 from pprint import pprint
 
 import requests
 
-from config import graph_api_host, graph_api_port
+from config import graph_api_host, graph_api_port, USE_DEPS_DEV
 from evaluation.get_dep_tree import get_cve
 from utils.db_utils import get_all_versions
+from utils.deps_dev_api import (
+    get_all_versions_deps_dev,
+    get_clean_versions_deps_dev,
+    get_cves_osv
+)
+
+logger = logging.getLogger(__name__)
 
 def get_unreachable_fewest_vul_vers(gav, c, vul_versions):
     g, a, v = gav.split('|')
-    # All versions are vulnerable
-    maven = c['library-crawler']['maven']
-    body = {
-        "name": a,
-        "vendor": g,
-        "version": v,
-        "platform": "maven"
-    }
     least_cves = 999
     least_cve_vers = set()
     for ver in vul_versions:
@@ -33,9 +33,14 @@ def get_unreachable_fewest_vul_vers(gav, c, vul_versions):
 
 def get_vul_versions(gav, c, clean_versions):
     g, a, v = gav.split('|')
-    maven = c['library-crawler']['maven']
+    maven = None
+    if c is not None:
+        try:
+            maven = c['library-crawler']['maven']
+        except Exception:
+            maven = None
     all_versions = set(get_all_versions(g + '|' + a, maven))
-    return all_versions-clean_versions
+    return all_versions - clean_versions
 
 
 def get_edges_from_deptree(deptree, root):
@@ -61,77 +66,59 @@ def get_edges_from_deptree(deptree, root):
     return ret
 
 
-def get_dependency_tree(directs, c):
-    maven = c['library-crawler']['maven']
-    body =[]
-    unfound = []
+def get_dependency_tree(directs, c=None):
+    body = []
     for gav in directs:
         g, a, v = gav.split('|')
-        # if not maven.find_one({'group': g, 'artifact': a, 'version': v}):
-        #     unfound.append(gav)
-        #     continue
         body.append({
             "name": a,
             "vendor": g,
             "version": v,
             "platform": "maven"
         })
-    response = requests.post(f'http://{graph_api_host}:{graph_api_port}/allDependencies', json=body)
-    if response.status_code == 200:
-        try:
-            return response.json()
-        except:
-            return {}
-    else:
-        print(json.loads(response.content.decode())['errorMessage'])
-        if 'Library Version not found' in json.loads(response.content.decode())['errorMessage']:
-            pgav = json.loads(response.content.decode())['errorMessage'].replace('Library Version not found: ', '')
-            error_gav = pgav.replace('maven:', '').replace(':', '|')
-            body = []
-            for gav in directs:
-                if gav == error_gav:
-                    continue
-                g, a, v = gav.split('|')
-                body.append({
-                    "name": a,
-                    "vendor": g,
-                    "version": v,
-                    "platform": "maven"
-                })
-            response = requests.post(f'http://{graph_api_host}:{graph_api_port}/allDependencies', json=body)
-            if response.status_code == 200:
-                try:
-                    return response.json()
-                except:
-                    return {}
-        return {}
+    try:
+        response = requests.post(f'http://{graph_api_host}:{graph_api_port}/allDependencies', json=body, timeout=5)
+        if response.status_code == 200:
+            try:
+                return response.json()
+            except Exception:
+                return {}
+    except Exception:
+        pass
+    return {}
 
 
-def get_clean_versions(gav, c):
+def get_clean_versions(gav, c=None):
     g, a, v = gav.split('|')
+    if USE_DEPS_DEV:
+        return get_clean_versions_deps_dev(g, a)
+
     body = {
         "name": a,
         "vendor": g,
         "version": v,
         "platform": "maven"
     }
-    response = requests.post(f'http://{graph_api_host}:{graph_api_port}/cleanVers', json=body)
-    if response.status_code == 200:
-        res = set(each['version'] for each in response.json())
-        if response.json()==[]:
-            response = requests.post(f'http://{graph_api_host}:{graph_api_port}/issues', json=body)
-            if response.status_code == 200:
-                if response.json() != []:
-                    # All vers vul
-                    return set()
+    try:
+        response = requests.post(f'http://{graph_api_host}:{graph_api_port}/cleanVers', json=body, timeout=5)
+        if response.status_code == 200:
+            res = set(each['version'] for each in response.json())
+            if response.json() == []:
+                response = requests.post(f'http://{graph_api_host}:{graph_api_port}/issues', json=body, timeout=5)
+                if response.status_code == 200:
+                    if response.json() != []:
+                        # All vers vul
+                        return set()
+                    else:
+                        return set({v})
                 else:
-                    return set({v})
+                    return res
             else:
                 return res
-        else:
-            return res
-    else:
-        return set()
+    except Exception as e:
+        logger.info(f"Graph API unavailable, falling back to deps.dev: {e}")
+
+    return get_clean_versions_deps_dev(g, a)
 
 def get_issues(item):
     '''

@@ -5,17 +5,27 @@ import os
 
 import pymongo
 
+import config
 from config import MONGO_HOST, MONGO_PORT, pom_path
 from download_pom import download_pom_one
 
 
 def populate_dep(gav, c=None):
-    if c==None:
-        c = pymongo.MongoClient(MONGO_HOST,
-                                port=MONGO_PORT)
-    maven_deps = c['library-crawler']['maven_deps']
-    if maven_deps.find_one({'parent': gav.replace('|', ':')}):
-        return
+    if c is None:
+        try:
+            c = pymongo.MongoClient(MONGO_HOST,
+                                    port=MONGO_PORT,
+                                    serverSelectionTimeoutMS=1000)
+        except Exception:
+            c = None
+    maven_deps = None
+    if c is not None:
+        try:
+            maven_deps = c['library-crawler']['maven_deps']
+            if maven_deps.find_one({'parent': gav.replace('|', ':')}):
+                return
+        except Exception:
+            maven_deps = None
     os.makedirs(pom_path, exist_ok=True)
     download_pom_one(gav)
     cwd = os.getcwd()
@@ -28,7 +38,7 @@ def populate_dep(gav, c=None):
         output = subprocess.check_output('mvn help:effective-pom -Doutput=tmp_pom.xml',stderr=subprocess.STDOUT, shell=True)
         # print(output)
     except:
-        with open('/Users/lyuye/workspace/collegues/yiran/errored.csv', 'a') as fc:
+        with open(config.workspace+'/collegues/yiran/errored.csv', 'a') as fc:
             csv.writer(fc).writerow([gav.replace('|', ':')])
     os.chdir(cwd)
     try:
@@ -73,7 +83,11 @@ def populate_dep(gav, c=None):
 
         os.remove(pom_path+'pom.xml',)
 
-        maven_deps.update_one({'parent': gav.replace('|', ":")}, {'$set':{'dependencies':dependencies, }},upsert=True)
+        if maven_deps is not None:
+            try:
+                maven_deps.update_one({'parent': gav.replace('|', ":")}, {'$set':{'dependencies':dependencies, }},upsert=True)
+            except Exception:
+                pass
         # maven_deps.insert_one({'dependencies':dependencies, 'parent': go+':'+ao+':'+vo})
     except Exception as e:
         print(gav, e)

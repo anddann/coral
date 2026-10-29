@@ -78,7 +78,7 @@ def apply():
             if k == 'org.springframework.boot|spring-boot-starter-web':
                 ver = '2.3.3.RELEASE'
             update_pom(os.path.join(test_path, 'pom.xml'), [k+'|'+ver], {k: ver})
-            # os.chdir('/Users/lyuye/workspace/remediation/' + project_address[i] + '_snyk/')
+            # os.chdir(config.workspace+'/remediation/' + project_address[i] + '_snyk/')
         print('[INFO] ~~ Finish apply remediation:', project)
         testing_compilation_test(project)
 def apply_one(project):
