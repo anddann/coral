@@ -123,3 +123,4 @@ Or run `production_entry.py` with custom project coordinates and JAR path.
 
 ### Step 4: Output
 Coral outputs the remediation plan (the recommended dependency version tuple for each direct and transitive dependency) into `remediation_results/<project_name>`.
+

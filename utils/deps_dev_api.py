@@ -256,3 +256,4 @@ def get_default_version_deps_dev(parent_gav: str, dep_ga: str) -> str:
 
     directs = get_direct_deps_deps_dev(pg, pa, pv)
     return directs.get(d_ga_key, "")
+

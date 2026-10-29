@@ -31,14 +31,9 @@ def get_callees(dep, parent_callers, callgraph_db_direct, callgraph_db_all):
     ret = set()
     try:
         g,a,v = dep.split('|')
-        docs = None
-        if callgraph_db_all is not None:
-            try:
-                coll = callgraph_db_all[g+'|'+a]
-                coll.create_index('version')
-                docs = coll.find_one({'version': v})
-            except Exception:
-                docs = None
+        coll = callgraph_db_all[g+'|'+a]
+        coll.create_index('version')
+        docs = coll.find_one({'version': v})
 
         # if 'druid' in dep:
         #     print('')
@@ -67,15 +62,11 @@ def get_callees(dep, parent_callers, callgraph_db_direct, callgraph_db_all):
             for line in csv.reader(open(edge_csv)):
                 edges.append(line)
                 direct_calls[line[0]].append(line[1])
-            if callgraph_db_direct is not None:
-                try:
-                    callgraph_db_direct[g+'|'+a].update_many({
-                        'version': v},{'$set':{
-                        'deps': direct_calls,
-                        'error': error
-                    }},upsert=True)
-                except Exception:
-                    pass
+            callgraph_db_direct[g+'|'+a].update_many({
+                'version': v},{'$set':{
+                'deps': direct_calls,
+                'error': error
+            }},upsert=True)
             indirect_calls = dict()
             for key in direct_calls:
                 callees = set()
@@ -91,45 +82,38 @@ def get_callees(dep, parent_callers, callgraph_db_direct, callgraph_db_all):
                             visited.add(caller)
                 indirect_calls[key] = list(callees)
 
-            if callgraph_db_all is not None:
+            try:
+                callgraph_db_all[g+'|'+a].update_many({
+                'version': v},{'$set':{
+                'deps': indirect_calls,
+                'error': error
+            }},upsert=True)
+            except:
+                batch = {}
                 try:
-                    callgraph_db_all[g+'|'+a].update_many({
-                    'version': v},{'$set':{
-                    'deps': indirect_calls,
-                    'error': error
-                }},upsert=True)
+                    for key in indirect_calls:
+                        batch[key] = indirect_calls[key]
+                        if len(batch.keys()) == 10:
+                            callgraph_db_all[g + '|' + a].update_many({
+                                'version': v},{'$set':{
+                                'deps': batch,
+                                'error': error
+                            }},upsert=True)
+                            batch = {}
+                    callgraph_db_all[g + '|' + a].update_many({
+                                'version': v},{'$set':{
+                                'deps': batch,
+                                'error': error
+                            }},upsert=True)
+                    callgraph_db_all[g + '|' + a].create_index('version')
                 except:
-                    batch = {}
-                    try:
-                        for key in indirect_calls:
-                            batch[key] = indirect_calls[key]
-                            if len(batch.keys()) == 10:
-                                callgraph_db_all[g + '|' + a].update_many({
-                                    'version': v},{'$set':{
-                                    'deps': batch,
-                                    'error': error
-                                }},upsert=True)
-                                batch = {}
+                    for key in indirect_calls:
                         callgraph_db_all[g + '|' + a].update_many({
-                                    'version': v},{'$set':{
-                                    'deps': batch,
-                                    'error': error
-                                }},upsert=True)
-                        callgraph_db_all[g + '|' + a].create_index('version')
-                    except:
-                        for key in indirect_calls:
-                            try:
-                                callgraph_db_all[g + '|' + a].update_many({
-                                    'version': v}, {'$set': {
-                                    'deps': {key: indirect_calls[key]},
-                                    'error': error
-                                }}, upsert=True)
-                            except Exception:
-                                pass
-                        try:
-                            callgraph_db_all[g + '|' + a].create_index('version')
-                        except Exception:
-                            pass
+                            'version': v}, {'$set': {
+                            'deps': {key: indirect_calls[key]},
+                            'error': error
+                        }}, upsert=True)
+                callgraph_db_all[g + '|' + a].create_index('version')
             deps = indirect_calls
 
 
@@ -155,16 +139,10 @@ def get_callees(dep, parent_callers, callgraph_db_direct, callgraph_db_all):
 
 
 def create_call_graph(edges, root, root_jar):
-    try:
-        c = pymongo.MongoClient(MONGO_HOST,
-                                port=int(MONGO_PORT),
-                                serverSelectionTimeoutMS=1000)
-        callgraph_db_direct = c['call_graphs_direct']
-        callgraph_db_all = c['call_graphs_all']
-    except Exception:
-        c = None
-        callgraph_db_direct = None
-        callgraph_db_all = None
+    c = pymongo.MongoClient(MONGO_HOST,
+                            port=int(MONGO_PORT))
+    callgraph_db_direct = c['call_graphs_direct']
+    callgraph_db_all = c['call_graphs_all']
     visisted = set()
     graph = {}
     graph[root] = get_root_callees(root_jar)
@@ -193,21 +171,14 @@ def create_call_graph(edges, root, root_jar):
     ret = set()
     for key in graph:
         ret|=graph[key]
-    if c is not None:
-        c.close()
+    c.close()
     return ret
 
 def create_call_graph_dict(edges, root, root_jar):
-    try:
-        c = pymongo.MongoClient(MONGO_HOST,
-                                port=int(MONGO_PORT),
-                                serverSelectionTimeoutMS=1000)
-        callgraph_db_direct = c['call_graphs_direct']
-        callgraph_db_all = c['call_graphs_all']
-    except Exception:
-        c = None
-        callgraph_db_direct = None
-        callgraph_db_all = None
+    c = pymongo.MongoClient(MONGO_HOST,
+                            port=int(MONGO_PORT))
+    callgraph_db_direct = c['call_graphs_direct']
+    callgraph_db_all = c['call_graphs_all']
     visisted = set()
     graph =defaultdict(set)
     graph[root] = get_root_callees(root_jar)
@@ -246,8 +217,7 @@ def create_call_graph_dict(edges, root, root_jar):
                 print('Graph derived: ', count, '\r', end='', flush=True)
                 if dep not in visisted:
                     next.add(dep)
-    if c is not None:
-        c.close()
+    c.close()
 
     # remove version from keys
     ret = {}
@@ -315,6 +285,5 @@ def generate_call_graph2DB():
             'deps': indirect_calls
         })
         callgraph_db_all[g + '|' + a].create_index('version')
-    if c is not None:
-        c.close()
+    c.close()
 
