@@ -123,3 +123,4 @@ The adaptations were verified using the project's virtual environment:
 2. **Live OSV Lookup**: Verified lookup of `io.netty:netty-codec:4.1.67.Final`, successfully retrieving known CVEs (`CVE-2021-37136`, `CVE-2021-37137`, etc.).
 3. **Clean Version Detection**: Verified batch query against `io.netty:netty-codec`, correctly identifying non-vulnerable versions.
 4. **Central Verification**: Tested `Node('io.netty|netty-codec|4.1.67.Final').check_central(None)` returning `True` without any running MongoDB instance.
+
