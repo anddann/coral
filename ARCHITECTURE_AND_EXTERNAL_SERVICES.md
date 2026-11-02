@@ -101,7 +101,7 @@ Run the semantic versioning helper microservice on port 8080:
 ```bash
 # Option A: via Docker
 cd maven_semver
-docker build -t maven-semver .
+docker build -t ghcr.io/anddann/coral-semver:1.0 .
 docker run -d -p 8080:8080 maven-semver
 
 # Option B: directly via Java 8+

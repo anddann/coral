@@ -104,3 +104,4 @@ set_fixed_vulnerabilities({
 # To reset back to loading from file:
 set_fixed_vulnerabilities(None)
 ```
+

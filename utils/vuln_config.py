@@ -189,3 +189,4 @@ def get_fixed_vuln_versions(group: str, artifact: str) -> Optional[Set[str]]:
         return set()
 
     return None
+
