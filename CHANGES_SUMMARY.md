@@ -124,3 +124,35 @@ The adaptations were verified using the project's virtual environment:
 3. **Clean Version Detection**: Verified batch query against `io.netty:netty-codec`, correctly identifying non-vulnerable versions.
 4. **Central Verification**: Tested `Node('io.netty|netty-codec|4.1.67.Final').check_central(None)` returning `True` without any running MongoDB instance.
 
+---
+
+## 4. Fixed Vulnerability Configuration & Candidate Upgrade Adaptation
+
+On branch **`fixed-vuln-configuration`**, additional enhancements and bug fixes were introduced to allow controlled offline testing and resolve candidate upgrade filtering:
+
+### 1. `vuln_config.json` & `utils/vuln_config.py` (New Files)
+* **What changed**: Created a configurable vulnerability override mechanism.
+* **Why it changed**: Allows supplying a deterministic, fixed set of CVEs, vulnerable versions, and clean versions for target dependencies (e.g., pinning `io.netty:netty-common:4.1.67.Final` with `CVE-2021-37136` and clean version `4.1.68.Final`), bypassing external network queries to OSV when desired.
+
+### 2. `maven_semver` Multi-Stage Containerization
+* **What changed**: Modernized `maven_semver/Dockerfile` to use `eclipse-temurin:17-jre` and a multi-stage Maven build. Implemented `maven_semver/src/main/java/VersionTools/Application.java` using JDK built-in `HttpServer` and `org.apache.maven:maven-artifact:3.9.6` providing `/sort`, `/checkinrange`, `/compare`, and `/health` HTTP endpoints.
+* **Why it changed**: The original Dockerfile referenced obsolete `openjdk:8` (which failed to resolve on arm64/macOS) and expected a missing pre-built jar.
+
+### 3. `utils/version_utils.py`
+* **What changed**:
+  * **`get_non_major_vers(c, gav, candidates)`**: Replaced MongoDB `maven.find()` version intersection with direct filtering of `candidates` by major version (`cand.split('.')[0] == major`). If no candidate matches, falls back to `candidates`.
+  * **`get_other_major_vers(c, gav, candidates)`**: Replaced MongoDB query with direct filtering where candidate major version differs.
+  * **`get_closest_default` & `get_averaged_defaults`**: Fixed parameter bug where `maven_deps` (a `Collection`) was passed to `get_default_version(..., c)` instead of `c` (`MongoClient`). Added safe fallbacks for `c is None`.
+  * **`get_least_deps_introducing_versions`**: Added safe null/exception checks for MongoDB access, returning the original candidate versions when MongoDB is offline.
+  * **`get_latest_version(g, a, c)`**: Added fallback to `get_all_versions(g + '|' + a, None)` sorted via the SemVer service when MongoDB has no records.
+* **Why it changed**: In the original code, `get_non_major_vers` queried MongoDB `library-crawler.maven`. When MongoDB was empty or offline, `all` was empty, causing `get_non_major_vers` to discard all candidate upgrade versions (`candidates = []`). This led `Node.calculate_candidates_safer()` to fail (`return 'hard'`) and backtrack, resulting in no dependency upgrades (`old_version == new_version`).
+
+### 4. `bom_evaluation.py`
+* **What changed**: Guarded `get_incom_apis(c, ga, ver1, ver2)` with `if c is not None:` before accessing `c['incom_apis']`.
+* **Why it changed**: Prevents unhandled `TypeError` exceptions when running without a MongoDB connection.
+
+### 5. Verification Results
+* Tested `production_entry.py` with `vuln_config.json`.
+* `remediation_results/netty-codec.json` showed `io.netty|netty-common` successfully updated from `4.1.67.Final` to `4.1.68.Final` (clean version), while unaffected non-vulnerable dependencies remained stable.
+
+

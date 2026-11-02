@@ -86,52 +86,27 @@ def get_minor_version(version):
 
 
 def get_non_major_vers(c, gav, candidates):
-    g,a,v = gav.split('|')
-    maven = c['library-crawler']['maven']
-    versions = list()
+    g, a, v = gav.split('|')
     major = v.split('.')[0]
-    all = []
-    for doc in maven.find({
-        'group': g,
-        'artifact': a
-    }):
-        if doc['version'].split('.')[0] == major:
-            versions.append(doc['version'])
-        all.append(doc['version'])
-    if len(versions)<1:
-        versions = list(filter(lambda x: x in candidates, all))
-    else:
-        versions = list(filter(lambda x: x in candidates, versions))
-    if len(versions) ==0:
-        versions = list(filter(lambda x: x in candidates, all))
-
-    return versions
+    filtered = [cand for cand in candidates if cand.split('.')[0] == major]
+    if len(filtered) > 0:
+        return filtered
+    return list(candidates)
 
 def get_other_major_vers(c, gav, candidates):
-    g,a,v = gav.split('|')
-    maven = c['library-crawler']['maven']
-    versions = list()
+    g, a, v = gav.split('|')
     major = v.split('.')[0]
-    all = []
-    for doc in maven.find({
-        'group': g,
-        'artifact': a
-    }):
-        if doc['version'].split('.')[0] != major:
-            versions.append(doc['version'])
-        all.append(doc['version'])
-    if len(versions) ==0:
-        versions = list(filter(lambda x: x in candidates, all))
-
-    return versions
+    filtered = [cand for cand in candidates if cand.split('.')[0] != major]
+    if len(filtered) > 0:
+        return filtered
+    return list(candidates)
 
 def get_closest_default(parent_node, dep_ga, dep_candidates, c):
-    maven = c['library-crawler']['maven']
-    maven_deps = c['library-crawler']['maven_deps']
+    maven = c['library-crawler']['maven'] if c is not None else None
     versions = _sort(get_all_versions(dep_ga, maven))
     min_distance = 1000
     ret = dep_candidates[-1]
-    default = get_default_version(parent_node.get_preferred_gav(), dep_ga, maven_deps)
+    default = get_default_version(parent_node.get_preferred_gav(), dep_ga, c)
     # check semantic rules
     if '[' in default and ']' in default and ',' not in default:
         return default.replace('[', '').replace(']', '')
@@ -150,15 +125,14 @@ def get_closest_default(parent_node, dep_ga, dep_candidates, c):
 
 
 def get_averaged_defaults(parent_nodes, dep_ga, dep_original_version, dep_candidates, c):
-    maven = c['library-crawler']['maven']
-    maven_deps = c['library-crawler']['maven_deps']
+    maven = c['library-crawler']['maven'] if c is not None else None
     defaults = []
     versions = get_all_versions(dep_ga, maven)
     min_distance = 1000
     ret = dep_candidates[-1]
     for parent_node in parent_nodes:
-        default = get_default_version(parent_node.get_gav(), dep_ga, maven_deps)
-        if default!= '':
+        default = get_default_version(parent_node.get_gav(), dep_ga, c)
+        if default != '':
             defaults.append(default.replace('-SNAPSHOT', ''))
         else:
             defaults.append(dep_original_version)
@@ -166,9 +140,8 @@ def get_averaged_defaults(parent_nodes, dep_ga, dep_original_version, dep_candid
     versions = _sort(versions)
 
     for cand in dep_candidates:
-
         current_distance = sum([abs(versions.index(d) - versions.index(cand)) for d in defaults])
-        if current_distance<min_distance:
+        if current_distance < min_distance:
             min_distance = current_distance
             ret = cand
     return ret
@@ -180,38 +153,57 @@ def get_least_deps_introducing_versions(c, gav, versions):
     """
     return list of lists [[least deps vers], [2nd least], [3rd...], ...]
     """
-    g,a,v = gav.split('|')
+    if c is None:
+        return [list(versions)]
+    try:
+        maven_deps = c['library-crawler']['maven_deps']
+    except Exception:
+        return [list(versions)]
+    g, a, v = gav.split('|')
     gav = gav.replace('|', ':')
     deps_size = {}
     ret = []
     ret2 = []
-    maven_deps = c['library-crawler']['maven_deps']
-    doc = maven_deps.find_one({'parent': gav})
+    try:
+        doc = maven_deps.find_one({'parent': gav})
+    except Exception:
+        doc = None
     if doc:
         current_size = len(doc['dependencies'])
     else:
         return [list(versions)]
     for ver in versions:
-        doc = maven_deps.find_one({'parent': g+':'+a+':'+ver})
+        try:
+            doc = maven_deps.find_one({'parent': g+':'+a+':'+ver})
+        except Exception:
+            doc = None
         if doc:
-            if len(doc['dependencies'])>current_size:
+            if len(doc['dependencies']) > current_size:
                 ret2.append(ver)
             else:
                 ret.append(ver)
         else:
             ret.append(ver)
-    if len(ret)==0:
+    if len(ret) == 0:
         return [ret2, ret2]
     return [ret, ret2]
 
 def get_latest_version(g, a, c):
-    maven = c['library-crawler']['maven']
-    docs = maven.find({'group': g, 'artifact': a}).sort('_id', -1)
-    v = None
-    for doc in docs:
-        v = doc['version']
-        break
-    return v
+    if c is not None:
+        try:
+            maven = c['library-crawler']['maven']
+            docs = maven.find({'group': g, 'artifact': a}).sort('_id', -1)
+            for doc in docs:
+                return doc['version']
+        except Exception:
+            pass
+    # fallback to get_all_versions
+    all_v = get_all_versions(g + '|' + a, None)
+    if all_v:
+        sorted_v = _sort(all_v)
+        if sorted_v:
+            return sorted_v[-1]
+    return None
 
 
 def split_version_list(versions):

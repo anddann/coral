@@ -487,29 +487,40 @@ def get_reachable_cves(one_time_graph, cves, connection):
     return list(reachable_cves), list(unreachable_cves), list(unsure_cves)
 
 def get_incom_apis(c, ga, ver1, ver2):
-    incom_coll = c['incom_apis'][ga]
     if ver1 == ver2:
         return []
-    doc = incom_coll.find_one({'verp': ver1+'|'+ver2})
+    incom_coll = None
+    if c is not None:
+        try:
+            incom_coll = c['incom_apis'][ga]
+            doc = incom_coll.find_one({'verp': ver1+'|'+ver2})
+            if doc:
+                if len(doc['apis']) == 0 and 'revapi' not in doc:
+                    print('Calculating revapi', ga, ver1, ver2)
+                    jar1 = get_jar_path(ga + '|' + ver1)
+                    jar2 = get_jar_path(ga + '|' + ver2)
+                    apis = revapi_jar(jar1, jar2)
+                    incom_coll.update_one({'verp': ver1+'|'+ver2}, {'$set': {'apis': apis, 'revapi': True}})
+                    return [api.replace(' ', '') for api in apis]
+                return [api.replace(' ', '') for api in doc['apis']]
+        except Exception:
+            incom_coll = None
+
+    print('Calculating', ga, ver1, ver2, '\r', end='', flush=True)
     jar1 = get_jar_path(ga + '|' + ver1)
     jar2 = get_jar_path(ga + '|' + ver2)
-    if doc:
-        if len(doc['apis']) == 0 and 'revapi' not in doc:
-            print('Calculating revapi', ga, ver1, ver2)
-            apis = revapi_jar(jar1, jar2)
-            incom_coll.update_one({'verp': ver1+'|'+ver2}, {'$set': {'apis': apis, 'revapi': True}})
-            return [api.replace(' ', '') for api in apis]
-        return [api.replace(' ', '') for api in doc['apis']]
-    else:
-        print('Calculating', ga, ver1, ver2, '\r', end='', flush=True)
-        apis = list(run_original_japicmp(jar1, jar2))
-        if len(apis) == 0:
-            apis = revapi_jar(jar1, jar2)
-        incom_coll.insert_one({'verp': ver1+'|'+ver2,
-            'apis': apis, 'revapi': True
-        }, bypass_document_validation=True)
-        incom_coll.create_index('verp')
-        return [api.replace(' ', '') for api in apis]
+    apis = list(run_original_japicmp(jar1, jar2))
+    if len(apis) == 0:
+        apis = revapi_jar(jar1, jar2)
+    if incom_coll is not None:
+        try:
+            incom_coll.insert_one({'verp': ver1+'|'+ver2,
+                'apis': apis, 'revapi': True
+            }, bypass_document_validation=True)
+            incom_coll.create_index('verp')
+        except Exception:
+            pass
+    return [api.replace(' ', '') for api in apis]
 
 
 def save_benchmark(project, other_tool, efforts,

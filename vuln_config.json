@@ -16,7 +16,19 @@
           "CVE-2021-37136"
         ]
       }
+    },
+    "io.netty:netty-common": {
+      "vulnerable_versions": [
+        "4.1.67.Final"
+      ],
+      "clean_versions": [
+        "4.1.68.Final"
+      ],
+      "cves": {
+        "4.1.67.Final": [
+          "CVE-2024-47535"
+        ]
+      }
     }
   }
 }
-
