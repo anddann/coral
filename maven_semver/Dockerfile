@@ -1,9 +1,18 @@
-FROM openjdk:8
+# Multi-stage build for Maven SemVer service
+# Compatible with both AMD64 and ARM64 (Apple Silicon)
 
-COPY ./target/maven.semver-1.1-jar-with-dependencies.jar /usr/app/
+FROM maven:3.9-eclipse-temurin-17 AS builder
+WORKDIR /app
 
-WORKDIR /usr/app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-RUN sh -c 'touch maven.semver-1.1-jar-with-dependencies.jar'
+FROM eclipse-temurin:17-jre
+WORKDIR /app
 
-ENTRYPOINT ["java","-jar","maven.semver-1.1-jar-with-dependencies.jar"]
+COPY --from=builder /app/target/maven.semver.jar /app/maven.semver.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "maven.semver.jar"]

@@ -1,0 +1,15 @@
+services:
+  coral-mongodb:
+    image: mongo:7.0.25
+    volumes:
+      - ./mongo-coral-data:/data/db
+    restart: always
+    ports:
+      - 27017:27017
+
+  coral-semserver:
+    image: maven-semver:latest
+    build: ./maven_semver
+    restart: always
+    ports:
+      - 8080:8080
